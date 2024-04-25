@@ -1,0 +1,1 @@
+import{C as s,c,D as t,F as l}from"./index-ac647112-08d053b9.js";const a="prefect-color-mode",e=localStorage.getItem(a),r=l(e)?e:null,{value:n,set:d}=s(a,r),u=c({get(){return n.value},set(o){d(o),t(o)}});function m(){t(u.value)}export{u as a,m as i};
