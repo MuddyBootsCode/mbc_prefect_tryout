@@ -5,7 +5,6 @@ import os
 
 load_dotenv()
 
-
 @task
 def get_repo_commits(url):
     token = os.getenv('GITHUB_API_KEY')
@@ -70,7 +69,6 @@ def repo_info(url):
     Given a GitHub repository, get the number of commits and the commit info
     """
     data = get_repo_commits(url)
-    print(len(data))
     result = get_commit_info(data)
     print(result[0])
 
