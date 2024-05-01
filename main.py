@@ -1,13 +1,13 @@
 from prefect import flow, task, get_run_logger
 import httpx
-from dotenv import load_dotenv
+import dotenv
 import ollama
 import os
 
 
 @task
 def get_repo_commits(url):
-    load_dotenv()
+    dotenv.load_dotenv()
     token = os.getenv('GITHUB_API_KEY')
     headers = {'Authorization': f'Bearer {token}'}
     logger = get_run_logger()
