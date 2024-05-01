@@ -4,11 +4,10 @@ from dotenv import load_dotenv
 import ollama
 import os
 
-load_dotenv()
-
 
 @task
 def get_repo_commits(url):
+    load_dotenv()
     token = os.getenv('GITHUB_API_KEY')
     headers = {'Authorization': f'Bearer {token}'}
     logger = get_run_logger()
@@ -115,7 +114,7 @@ if __name__ == '__main__':
     #     version="tutorial/deployments",
     # )
     get_repo_info.from_source(
-        source="https://gist.github.com/MuddyBootsCode/c48092cbaeac45e893549f720ed1202c",
+        source="https://github.com/MuddyBootsCode/mbc_prefect_tryout.git",
         entrypoint="main.py:get_repo_info",
     ).deploy(
         name="repo_tryout2",
