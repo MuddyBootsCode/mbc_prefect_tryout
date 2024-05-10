@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    restart: always
+
+  python-app:
+    build: ./python-app
+    image: python:3
+    volumes:
+      - ./python-app:/app
+    depends_on:
+        - ollama
+    links:
+        - ollama
+    environment:
+      GITHUB_API_KEY: ${GITHUB_API_KEY}
