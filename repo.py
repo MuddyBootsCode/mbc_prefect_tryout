@@ -4,8 +4,29 @@ import ollama
 from dotenv import load_dotenv
 import pprint
 import os
+import json
 
 load_dotenv('.env', override=True)
+
+import json
+import re
+
+
+def parse_stringified_json(obj):
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            obj[key] = parse_stringified_json(value)
+    elif isinstance(obj, list):
+        return [parse_stringified_json(item) for item in obj]
+    elif isinstance(obj, str):
+        # Try to detect and parse stringified JSON
+        try:
+            # Use regex to detect if the string looks like a JSON object or array
+            if re.match(r'^\[.*\]$', obj.strip()) or re.match(r'^\{.*\}$', obj.strip()):
+                return parse_stringified_json(json.loads(obj))
+        except json.JSONDecodeError:
+            pass
+    return obj
 
 
 def get_repo_commits(url):
@@ -70,35 +91,42 @@ async def get_commit_info(data):
     return result_list
 
 
-def get_summary(commit):
-    print('preparing summary for commit', commit['commit_message'])
-    summary = ollama.chat(model="llama3", format='json', messages=[
-        {
-            'role': 'user',
-            'content': f"""
+def get_repo_summary(commit):
+    try:
+        response = ollama.chat(model="llama3", format='json', stream=False, messages=[
+            {
+                'role': 'user',
+                'content': f"""
                 Here is the commit data: {commit}
-                Analyze this commit from a GitHub repository. Summarize the main changes in a paragraph,
-                including the patch details. Identify the functions and files that were modified. 
+                Analyze this commit from a GitHub repository. Summarize the main changes,
+                including the patch details. Identify the functions and files that were modified.
                 Assess the importance of this commit to the overall codebase on a scale from 1 to 5,
                 with 5 being the most crucial. Format the analysis in a compact JSON format without any new lines
-                or unnecessary spaces. Include keys 'Files', 'Functions', 'Summary', 'Importance'. 
+                or unnecessary spaces. Include keys 'Files', 'Functions', 'Summary', 'Importance'.
                 For each file, list the filename, its raw URL, and include the patch content.
                 Specify which functions were affected in each file. The JSON output should be compact
                 and readable in a single line if possible.
                 """
-        }
-    ])
-    pprint.pprint(summary['message']['content'])
-    return summary['message']['content']
+            }
+        ])
+        try:
+            commit['summary'] = response['message']['content']
+        except KeyError:
+            print(f"An error occurred: {response}")
+            return commit
+        return commit
+    except Exception as e:
+        return None
 
 
 async def main():
     url = "https://api.github.com/repos/prefecthq/prefect/commits"
     data = get_repo_commits(url)
-    commits = await get_commit_info(data)
+    commits = await get_commit_info(data[0:1])
     for commit in commits:
-        summary = get_summary(commit)
-        commit['summary'] = summary
+        summary = get_repo_summary(commit)
+        commit['summary'] = parse_stringified_json(summary)
+        pprint.pprint(commit)
 
 
 if __name__ == "__main__":
